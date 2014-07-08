@@ -4,37 +4,68 @@ using System.Collections.Generic;
 
 public class PlanarGraph : MonoBehaviour 
 {
-	// settings
 	public int 		numOfVertices = 4;
 	public float 	percentRemoveLines = 0.2f;
-
-	// prefabs and materials
+	
 	public GraphVertice		prefab;
 	public Material			defaultMaterial;
 	public Material			highlightMaterial;
 	public Material			selectedMaterial;
 	public Material			lineNormalMaterial;
-	public Material			lineCrossing;
+	public Material			lineCrossingMaterial;
 
-	//public GraphVertice lastSelection = null;
-
-	List<GraphVertice> 	vertices = new List<GraphVertice>();
-	//List<GraphLine> 	lines = new List<GraphLine>();
+	public List<GraphVertice> 	vertices = new List<GraphVertice>();
+	public List<GraphLine> 		lines = new List<GraphLine>();
 
 
-	void Start () {
-		if(numOfVertices < 4)
-		{
+	// objects containers
+	Transform	verticesContainer;
+	Transform 	linesContainer;
+
+
+	//------------------------------------------------------------------------------------------------------------------
+	void Start () 
+	{
+		if(numOfVertices < 4) {
 			Debug.Log ("Minimum 4 vertices!");
 			return;
 		}
-
+		
+		CreateContainers();
 		CreateVertices();
-		CirclePositioning2D(Vector3.zero, 5f, 0f);
 		CreateLines();
+		PositionAroundCircle(Vector3.zero, 5f);
 		//RemovePercentRandomLines(percentRemoveLines);
+		
+		foreach(GraphLine line in lines)
+			line.CheckIfLineIntersectOthers();
+	}
+	
+	void Update()
+	{
+		// TODO update lines material TODO: move
+		foreach(GraphLine line in lines)
+		{
+			LineRenderer lr = line.GetComponent<LineRenderer>(); 
+			if(line.isIntersect) {
+				lr.sharedMaterial = lineCrossingMaterial;
+			} else {
+				if(lr.sharedMaterial.name != lineNormalMaterial.name)
+					lr.sharedMaterial = lineNormalMaterial;
+			}
+		}
+		
 	}
 
+	//------------------------------------------------------------------------------------------------------------------
+	void CreateContainers()
+	{
+		verticesContainer = new GameObject("_vertices").GetComponent<Transform>();
+		verticesContainer.parent = transform;
+		linesContainer = new GameObject("_lines").GetComponent<Transform>();
+		linesContainer.parent = transform;
+	}
+	
 	void CreateVertices()
 	{
 		// create vertices
@@ -43,6 +74,7 @@ public class PlanarGraph : MonoBehaviour
 			GraphVertice newVertice = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity) as GraphVertice;
 			newVertice.gameObject.renderer.sharedMaterial = defaultMaterial;
 			newVertice.gameObject.name = newVertice.gameObject.name + "_" + i;
+			newVertice.transform.parent = verticesContainer;
 			vertices.Add(newVertice);
 		}
 	}
@@ -50,28 +82,31 @@ public class PlanarGraph : MonoBehaviour
 	void CreateLines()
 	{
 		// create lines, iterate each with each
-		for(int i=0; i < numOfVertices; ++i)
+		for(int i=0; i < numOfVertices; ++i) 
 		{
-			for(int j=0; j < numOfVertices; ++j)
+			for(int j=0; j < numOfVertices; ++j) 
 			{
 				if(j == i) continue;	// skip current element
-				Vector3 vertPosA = vertices[i].transform.position;
-				Vector3 vertPosB = vertices[j].transform.position;
-				vertices[i].CreateNeighborLine(vertices[j]);
+
+				GraphLine newLine = vertices[i].CreateNeighborLine(vertices[j]);
+				if(newLine != null) {
+					newLine.transform.parent = linesContainer;
+					lines.Add(newLine);
+				}
 			}
 		}
 	}
-
-
-	public void Positioning4vers2D(float depth = 0f)
+	
+	public void Positioning4vers2D()
 	{
-		vertices[0].transform.position = new Vector3(-2.5f, 0, depth);
-		vertices[1].transform.position = new Vector3(0f, 2.5f, depth);
-		vertices[2].transform.position = new Vector3(2.5f, 0, depth);
-		vertices[3].transform.position = new Vector3(0, -2.5f, depth);
+		vertices[0].transform.position = new Vector3(-2.5f, 0, 0);
+		vertices[1].transform.position = new Vector3(0f, 2.5f, 0);
+		vertices[2].transform.position = new Vector3(2.5f, 0, 0);
+		vertices[3].transform.position = new Vector3(0, -2.5f, 0);
 	}
 
-	public void CirclePositioning2D(Vector3 center, float radius = 2.5f, float depth = 0f)
+	// Position vertices around circle path
+	public void PositionAroundCircle(Vector3 center, float radius = 2.5f)
 	{
 		float angleStep = 360f / vertices.Count;
 		for(int i=0; i < vertices.Count; ++i)
@@ -79,13 +114,14 @@ public class PlanarGraph : MonoBehaviour
 			float angle = angleStep * i;
 			float x = center.x + radius * Mathf.Cos ( Mathf.Deg2Rad * angle);
 			float y = center.y + radius * Mathf.Sin ( Mathf.Deg2Rad * angle);
-			vertices[i].transform.position = new Vector3( x, y, depth);
+			vertices[i].transform.position = new Vector3( x, y, 0);
 		}
 	}
 
-	// percent given from 0.0 to 1.0
+	// Remove given percent of lines, percent from 0.0 to 1.0
 	public void RemovePercentRandomLines(float percent)
 	{
+
 		// TODO...
 		// numOfLines = GameObject.FindObjectsOfType().Count
 		/*
@@ -99,6 +135,7 @@ public class PlanarGraph : MonoBehaviour
 
 	public void RemoveRandomLines(int removeLines)
 	{
+		// TODO
 		/*Debug.Log("Lines to remove: " + removeLines);
 
 		List<GraphLine> tempLines  = lines;
@@ -111,4 +148,6 @@ public class PlanarGraph : MonoBehaviour
 			tempLines.RemoveAt(r);
 		}*/
 	}
+
+
 }
