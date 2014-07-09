@@ -7,8 +7,14 @@ using System.Collections;
  * http://www.wyrmtale.com/blog/2013/115/2d-line-intersection-in-c
  */
 
+
 public class Geometry2DHelper 
 {
+	public static readonly Vector3 INVALID2D = new Vector3(9999f,9999f,0);
+	public static readonly Vector3 INVALID3D = new Vector3(9999f,9999f,9999f);
+
+	public static float SCALE_FACTOR = 0.2f; // with 0 lines starts and ends at the same position which result with collision
+
 	public static float Distance(Vector3 a, Vector3 b)
 	{
 		return Mathf.Sqrt( (b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y)); 
@@ -16,33 +22,71 @@ public class Geometry2DHelper
 	
 	public static bool InRect(Vector3 point, Vector3 topLeft, Vector3 bottomRight)
 	{
-		if(topLeft.x >= Mathf.Min(bottomRight.x, point.x) && topLeft.x <= Mathf.Max(bottomRight.x, point.x) && 
-		   topLeft.y >= Mathf.Min(bottomRight.y, point.y) && topLeft.y <= Mathf.Max(bottomRight.y, point.y)) 
-			  return true;
+		//topLeft *= 0.9f; bottomRight *= 0.9f; // - make lines shorter
+		if(point.x >= Mathf.Min(topLeft.x, bottomRight.x ) && 
+		   point.x <= Mathf.Max(topLeft.x, bottomRight.x ) && 
+		   point.y >= Mathf.Min(topLeft.y, bottomRight.y) && 
+		   point.y <= Mathf.Max(topLeft.y, bottomRight.y )) 
+			return true;
 		return false;
 	}
-	
+
+	public static float Round2DP(float value)
+	{
+		return Mathf.Round(value * 100f) / 100f;
+	}
+
+	public static void ShortVectorBy(float factor, Vector3 v1, Vector3 v2, out Vector3 o1, out Vector3 o2)
+	{
+
+		o1 = v1; 
+		o2 = v2;
+		Vector3 dv = v1 - v2;
+		//Debug.Log("### o1: " + o1 + " o2: " + o2);
+		//Debug.Log("## Shorty by: " + factor + " dv: " + dv + " mag: " + dv.magnitude);
+
+
+		if(dv.magnitude >= 1f) {
+			dv.Normalize();  
+			dv.Scale( new Vector3(factor, factor, 1f));
+			o1 -= dv; 
+			o2 += dv;
+			//Debug.Log("# o1: " + o1 + " o2: " + o2);
+		}
+
+		//o1 = RoundDP(o1); o2 = RoundDP(o2);
+	}
+
 	public static bool LinesIntersection(Vector3 a1, Vector3 a2, Vector3 b1, Vector3 b2, out Vector3 point) 
 	{	
-		point = Vector2.zero;
+		point = INVALID2D;
 		// a - starting point b - ending points
-		float dax = (a1.x-a2.x);
-		float dbx = (b1.x-b2.x);
-		float day = (a1.y-a2.y);
-		float dby = (b1.y-b2.y);
-					
+		float dax = (a1.x-a2.x); float dbx = (b1.x-b2.x);
+		float day = (a1.y-a2.y); float dby = (b1.y-b2.y);
+		//Debug.Log("## dAx: " + dax + " # dBx: " + dbx);
+		//Debug.Log("## dAy: " + day + " # dBy: " + dby);
+
 		float delta = dax*dby - day*dbx;
+		//Debug.Log("## Delta { dax*dby - day*dbx } : " + delta);
+
 		if (delta == 0) 
 			return false;	// parallel
 
 		float A = (a1.x * a2.y - a1.y * a2.x);
 		float B = (b1.x * b2.y - b1.y * b2.x);
-					
+		//Debug.Log("## A: " + A + " ### B: " + B );	
+
 		point.x = ( A*dbx - dax*B ) / delta;
 		point.y = ( A*dby - day*B ) / delta;
 
+		// round 2DP
+		//point.x = Round2DP(point.x);
+		//point.y = Round2DP(point.y);
+		//Debug.Log("## Point: " + point);
+		//Debug.Log("## InRECT( 1a: " + a1 + " 2a " + a2 + ") && InRECT( 1b: " + b1 + " 2b: " + b2 + ")");
+	
 		// intersection point is located between starting and ending point of each line.
-		if(InRect(point, a1, a2) && InRect(point, b1, b2)) 
+ 		if( InRect(point, a1, a2) && InRect(point, b1, b2)) 
 			return true;
 
 		return false;

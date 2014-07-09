@@ -29,8 +29,9 @@ public class GraphVertice : MonoBehaviour
 			Vector3 mousePos = Camera.main.ScreenToWorldPoint(
 				new Vector3(Input.mousePosition.x, Input.mousePosition.y, -Camera.main.transform.position.z));
 			targetPosition = new Vector3(mousePos.x, mousePos.y, transform.position.z);
+			Move();
 		}
-		Move();
+		//Move();
 	}
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -38,7 +39,7 @@ public class GraphVertice : MonoBehaviour
 	{
 		if(transform.position != targetPosition)
 		{
-			transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * moveSpeed);
+			transform.position = targetPosition; //Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * moveSpeed);
 		}
 	}
 

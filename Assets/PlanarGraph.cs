@@ -36,9 +36,6 @@ public class PlanarGraph : MonoBehaviour
 		CreateLines();
 		PositionAroundCircle(Vector3.zero, 5f);
 		//RemovePercentRandomLines(percentRemoveLines);
-		
-		foreach(GraphLine line in lines)
-			line.CheckIfLineIntersectOthers();
 	}
 	
 	void Update()
@@ -50,7 +47,7 @@ public class PlanarGraph : MonoBehaviour
 			if(line.isIntersect) {
 				lr.sharedMaterial = lineCrossingMaterial;
 			} else {
-				if(lr.sharedMaterial.name != lineNormalMaterial.name)
+				if(lr.sharedMaterial != lineNormalMaterial)
 					lr.sharedMaterial = lineNormalMaterial;
 			}
 		}
