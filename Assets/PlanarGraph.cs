@@ -85,6 +85,11 @@ public class PlanarGraph : MonoBehaviour
 			{
 				if(j == i) continue;	// skip current element
 
+				if(j == numOfVertices-1) // skip last
+					continue;
+				if(Random.value > 0.75f)	// skip random lines
+					continue;
+
 				GraphLine newLine = vertices[i].CreateNeighborLine(vertices[j]);
 				if(newLine != null) {
 					newLine.transform.parent = linesContainer;
